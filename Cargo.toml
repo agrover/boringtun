@@ -38,3 +38,6 @@ path = "src/main.rs"
 [[example]]
 name = "benchmarks"
 path = "src/benchmarks_example.rs"
+
+[profile.dev]
+incremental = false
