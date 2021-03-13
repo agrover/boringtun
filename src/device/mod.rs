@@ -689,7 +689,7 @@ impl Device {
                 let iface = &t.iface;
                 let mut iter = MAX_ITR;
 
-                while let Ok(src) = udp.read(&mut t.src_buf[..]) {
+                while let Ok(src) = udp.recv(&mut t.src_buf[..]) {
                     let mut flush = false;
                     match peer
                         .tunnel
@@ -699,7 +699,7 @@ impl Device {
                         TunnResult::Err(e) => eprintln!("Decapsulate error {:?}", e),
                         TunnResult::WriteToNetwork(packet) => {
                             flush = true;
-                            udp.write(packet).unwrap();
+                            udp.send(packet).unwrap();
                         }
                         TunnResult::WriteToTunnelV4(packet, addr) => {
                             if peer.is_allowed_ip(addr) {
@@ -718,7 +718,7 @@ impl Device {
                         while let TunnResult::WriteToNetwork(packet) =
                             peer.tunnel.decapsulate(None, &[], &mut t.dst_buf[..])
                         {
-                            udp.write(packet).unwrap();
+                            udp.send(packet).unwrap();
                         }
                     }
 
@@ -783,7 +783,7 @@ impl Device {
                             let endpoint = peer.endpoint();
                             if let Some(ref conn) = endpoint.conn {
                                 // Prefer to send using the connected socket
-                                conn.write(packet).unwrap();
+                                conn.send(packet).unwrap();
                             } else if let Some(addr @ SocketAddr::V4(_)) = endpoint.addr {
                                 udp4.sendto(packet, addr).unwrap();
                             } else if let Some(addr @ SocketAddr::V6(_)) = endpoint.addr {
