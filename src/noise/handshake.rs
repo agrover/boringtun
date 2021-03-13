@@ -292,10 +292,7 @@ impl Handshake {
     }
 
     pub(crate) fn is_in_progress(&self) -> bool {
-        match self.state {
-            HandshakeState::None | HandshakeState::Expired => false,
-            _ => true,
-        }
+        !matches!(self.state, HandshakeState::None | HandshakeState::Expired)
     }
 
     pub(crate) fn timer(&self) -> Option<Instant> {
@@ -311,10 +308,7 @@ impl Handshake {
     }
 
     pub(crate) fn is_expired(&self) -> bool {
-        match self.state {
-            HandshakeState::Expired => true,
-            _ => false,
-        }
+        matches!(self.state, HandshakeState::Expired)
     }
 
     pub(crate) fn has_cookie(&self) -> bool {
@@ -531,11 +525,7 @@ impl Handshake {
     }
 
     // Compute and append mac1 and mac2 to a handshake message
-    fn append_mac1_and_mac2<'a>(
-        &mut self,
-        local_index: u32,
-        dst: &'a mut [u8],
-    ) -> Result<&'a mut [u8], WireGuardError> {
+    fn append_mac1_and_mac2<'a>(&mut self, local_index: u32, dst: &'a mut [u8]) -> &'a mut [u8] {
         let mac1_off = dst.len() - 32;
         let mac2_off = dst.len() - 16;
 
@@ -559,7 +549,7 @@ impl Handshake {
 
         self.cookies.index = local_index;
         self.cookies.last_mac1 = Some(msg_mac1);
-        Ok(dst)
+        dst
     }
 
     pub(super) fn format_handshake_initiation<'a>(
@@ -638,7 +628,7 @@ impl Handshake {
             }),
         );
 
-        self.append_mac1_and_mac2(local_index, &mut dst[..super::HANDSHAKE_INIT_SZ])
+        Ok(self.append_mac1_and_mac2(local_index, &mut dst[..super::HANDSHAKE_INIT_SZ]))
     }
 
     fn format_handshake_response<'a>(
@@ -726,7 +716,7 @@ impl Handshake {
         let temp2 = HMAC!(temp1, [0x01]);
         let temp3 = HMAC!(temp1, temp2, [0x02]);
 
-        let dst = self.append_mac1_and_mac2(local_index, &mut dst[..super::HANDSHAKE_RESP_SZ])?;
+        let dst = self.append_mac1_and_mac2(local_index, &mut dst[..super::HANDSHAKE_RESP_SZ]);
 
         Ok((dst, Session::new(local_index, peer_index, temp2, temp3)))
     }

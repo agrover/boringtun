@@ -164,7 +164,7 @@ fn api_get(writer: &mut BufWriter<&UnixStream>, d: &Device) -> i32 {
     0
 }
 
-fn api_set<'a>(reader: &mut BufReader<&UnixStream>, d: &mut LockReadGuard<Device>) -> i32 {
+fn api_set(reader: &mut BufReader<&UnixStream>, d: &mut LockReadGuard<Device>) -> i32 {
     d.try_writeable(
         |device| device.trigger_yield(),
         |device| {
@@ -172,7 +172,7 @@ fn api_set<'a>(reader: &mut BufReader<&UnixStream>, d: &mut LockReadGuard<Device
 
             let mut cmd = String::new();
 
-            while let Ok(_) = reader.read_line(&mut cmd) {
+            while reader.read_line(&mut cmd).is_ok() {
                 cmd.pop(); // remove newline if any
                 if cmd.is_empty() {
                     return 0; // Done
@@ -240,7 +240,7 @@ fn api_set_peer(
     let mut preshared_key = None;
     let mut allowed_ips: Vec<AllowedIP> = vec![];
 
-    while let Ok(_) = reader.read_line(&mut cmd) {
+    while reader.read_line(&mut cmd).is_ok() {
         cmd.pop(); // remove newline if any
         if cmd.is_empty() {
             d.update_peer(

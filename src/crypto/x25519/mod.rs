@@ -489,7 +489,7 @@ fn sqr_256(x: Felem) -> Felem2 {
 
 #[inline(always)]
 fn mod_25519(x: Felem2) -> Felem {
-    let c38 = 38 as u128;
+    let c38 = 38_u128;
 
     let mut acc0 = u128::from(x.0[0]);
     let mut acc1 = u128::from(x.0[1]);
