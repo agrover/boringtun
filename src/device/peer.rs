@@ -78,7 +78,7 @@ impl Peer {
     pub fn shutdown_endpoint(&self) {
         if let Some(conn) = self.endpoint.write().conn.take() {
             info!(self.tunnel.logger, "Disconnecting from endpoint");
-            conn.shutdown();
+            conn.shutdown().unwrap();
         }
     }
 
@@ -87,7 +87,7 @@ impl Peer {
         if endpoint.addr != Some(addr) {
             // We only need to update the endpoint if it differs from the current one
             if let Some(conn) = endpoint.conn.take() {
-                conn.shutdown();
+                conn.shutdown().unwrap();
             }
 
             *endpoint = Endpoint {
@@ -113,12 +113,12 @@ impl Peer {
                 .set_non_blocking()?
                 .set_reuse()?
                 .bind(port)?
-                .connect(&addr)?,
+                .connect(addr)?,
             Some(addr @ SocketAddr::V6(_)) => UDPSocket::new6()?
                 .set_non_blocking()?
                 .set_reuse()?
                 .bind(port)?
-                .connect(&addr)?,
+                .connect(addr)?,
             None => panic!("Attempt to connect to undefined endpoint"),
         });
 

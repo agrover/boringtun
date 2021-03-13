@@ -78,6 +78,12 @@ pub enum Error {
     ApiSocket(std::io::Error),
 }
 
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::ApiSocket(err)
+    }
+}
+
 // What the event loop should do after a handler returns
 enum Action {
     Continue, // Continue the loop
@@ -543,7 +549,8 @@ impl Device {
                             match endpoint_addr {
                                 SocketAddr::V4(_) => udp4.sendto(packet, endpoint_addr),
                                 SocketAddr::V6(_) => udp6.sendto(packet, endpoint_addr),
-                            };
+                            }
+                            .unwrap();
                         }
                         _ => panic!("Unexpected result from update_timers"),
                     };
@@ -587,7 +594,7 @@ impl Device {
                         match rate_limiter.verify_packet(Some(addr.ip()), packet, &mut t.dst_buf) {
                             Ok(packet) => packet,
                             Err(TunnResult::WriteToNetwork(cookie)) => {
-                                udp.sendto(cookie, addr);
+                                udp.sendto(cookie, addr).unwrap();
                                 continue;
                             }
                             Err(_) => continue,
@@ -622,7 +629,7 @@ impl Device {
                         TunnResult::Err(_) => continue,
                         TunnResult::WriteToNetwork(packet) => {
                             flush = true;
-                            udp.sendto(packet, addr);
+                            udp.sendto(packet, addr).unwrap();
                         }
                         TunnResult::WriteToTunnelV4(packet, addr) => {
                             if peer.is_allowed_ip(addr) {
@@ -641,7 +648,7 @@ impl Device {
                         while let TunnResult::WriteToNetwork(packet) =
                             peer.tunnel.decapsulate(None, &[], &mut t.dst_buf[..])
                         {
-                            udp.sendto(packet, addr);
+                            udp.sendto(packet, addr).unwrap();
                         }
                     }
 
@@ -691,7 +698,7 @@ impl Device {
                         TunnResult::Err(e) => eprintln!("Decapsulate error {:?}", e),
                         TunnResult::WriteToNetwork(packet) => {
                             flush = true;
-                            udp.write(packet);
+                            udp.write(packet).unwrap();
                         }
                         TunnResult::WriteToTunnelV4(packet, addr) => {
                             if peer.is_allowed_ip(addr) {
@@ -710,7 +717,7 @@ impl Device {
                         while let TunnResult::WriteToNetwork(packet) =
                             peer.tunnel.decapsulate(None, &[], &mut t.dst_buf[..])
                         {
-                            udp.write(packet);
+                            udp.write(packet).unwrap();
                         }
                     }
 
@@ -775,11 +782,11 @@ impl Device {
                             let endpoint = peer.endpoint();
                             if let Some(ref conn) = endpoint.conn {
                                 // Prefer to send using the connected socket
-                                conn.write(packet);
+                                conn.write(packet).unwrap();
                             } else if let Some(addr @ SocketAddr::V4(_)) = endpoint.addr {
-                                udp4.sendto(packet, addr);
+                                udp4.sendto(packet, addr).unwrap();
                             } else if let Some(addr @ SocketAddr::V6(_)) = endpoint.addr {
-                                udp6.sendto(packet, addr);
+                                udp6.sendto(packet, addr).unwrap();
                             } else {
                                 error!(d.config.logger, "No endpoint");
                             }
