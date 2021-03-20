@@ -42,3 +42,6 @@ path = "src/benchmarks_example.rs"
 
 [profile.dev]
 incremental = false
+
+[profile.test]
+incremental = false
