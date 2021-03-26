@@ -62,7 +62,7 @@ impl Peer {
                 addr: endpoint,
                 conn: None,
             }),
-            allowed_ips: allowed_ips.iter().collect(),
+            allowed_ips: allowed_ips.iter().map(|ip| (ip, ())).collect(),
             preshared_key,
         }
     }
@@ -142,8 +142,8 @@ impl Peer {
         self.allowed_ips.find(addr.into()).is_some()
     }
 
-    pub fn allowed_ips(&self) -> Iter<()> {
-        self.allowed_ips.iter()
+    pub fn allowed_ips(&self) -> impl Iterator<Item = (IpAddr, u8)> + '_ {
+        self.allowed_ips.iter().map(|(_, ip, cidr)| (ip, cidr))
     }
 
     pub fn time_since_last_handshake(&self) -> Option<std::time::Duration> {

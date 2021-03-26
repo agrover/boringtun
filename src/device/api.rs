@@ -147,7 +147,7 @@ fn api_get(writer: &mut BufWriter<&UnixStream>, d: &Device) -> i32 {
             writeln!(writer, "endpoint={}", addr);
         }
 
-        for (_, ip, cidr) in p.allowed_ips() {
+        for (ip, cidr) in p.allowed_ips() {
             writeln!(writer, "allowed_ip={}/{}", ip, cidr);
         }
 
