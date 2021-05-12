@@ -21,7 +21,7 @@ impl<'a, D> FromIterator<(&'a AllowedIP, D)> for AllowedIps<D> {
         let mut allowed_ips = AllowedIps::new();
 
         for (ip, data) in iter {
-            allowed_ips.insert(ip.addr, ip.cidr as usize, data);
+            allowed_ips.insert(ip.addr, ip.cidr as u32, data);
         }
 
         allowed_ips
@@ -39,19 +39,13 @@ impl<D> AllowedIps<D> {
         self.ips = IpNetworkTable::new();
     }
 
-    pub fn insert(&mut self, key: IpAddr, cidr: usize, data: D) -> Option<D> {
-        match key {
-            IpAddr::V4(addr) => {
-                assert!(cidr <= 32);
-                self.ips
-                    .insert(IpNetwork::new(addr, cidr as u8).unwrap(), data)
-            }
-            IpAddr::V6(addr) => {
-                assert!(cidr <= 128);
-                self.ips
-                    .insert(IpNetwork::new(addr, cidr as u8).unwrap(), data)
-            }
-        }
+    pub fn insert(&mut self, key: IpAddr, cidr: u32, data: D) -> Option<D> {
+        // These are networks, it doesn't make sense for host bits to be set, so
+        // use new_truncate().
+        self.ips.insert(
+            IpNetwork::new_truncate(key, cidr as u8).expect("cidr is valid length"),
+            data,
+        )
     }
 
     pub fn find(&self, key: IpAddr) -> Option<&D> {
