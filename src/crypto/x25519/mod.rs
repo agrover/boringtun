@@ -638,7 +638,7 @@ fn x25519_shared_key(peer_key: &[u8], secret_key: &[u8]) -> [u8; 32] {
 
     let mut scalar = [0_u8; 32];
     let mut shared_key = [0_u8; 32];
-    scalar[..].copy_from_slice(&secret_key[..]);
+    scalar[..].copy_from_slice(secret_key);
 
     assert!(peer_key.len() == 32);
     let u = Felem([

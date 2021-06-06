@@ -568,11 +568,7 @@ impl Tunn {
     /// * Data bytes sent
     /// * Data bytes received
     pub fn stats(&self) -> (Option<u64>, usize, usize, f32, Option<u32>) {
-        let time = if let Some(time) = self.time_since_last_handshake() {
-            Some(time.as_secs())
-        } else {
-            None
-        };
+        let time = self.time_since_last_handshake().map(|time| time.as_secs());
         let tx_bytes = self.tx_bytes.load(Ordering::Relaxed);
         let rx_bytes = self.rx_bytes.load(Ordering::Relaxed);
         let loss = self.estimate_loss();
